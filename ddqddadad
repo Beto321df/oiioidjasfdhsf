@@ -1,0 +1,210 @@
+- Pc
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+
+if CoreGui:FindFirstChild("SLX_Final") then
+    CoreGui.SLX_Final:Destroy()
+end
+
+local Screen = Instance.new("ScreenGui", CoreGui)
+Screen.Name = "SLX_Final"
+Screen.IgnoreGuiInset = true
+
+-- Variables Globales
+local windows = {}
+local globalWidth = 120 
+local globalPadding = 15  
+local rainbowColor = Color3.new(1,1,1)
+
+-- Ciclo Rainbow y Update de FOV
+RunService.RenderStepped:Connect(function()
+    rainbowColor = Color3.fromHSV(tick() % 5 / 5, 0.8, 1)
+    FOVCircle.Color = _G.FOVRainbow and rainbowColor or Color3.new(1,1,1)
+    FOVCircle.Radius = _G.FOVSize
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    FOVCircle.Visible = _G.FOVVisible
+end)
+
+-- Reorganizar Ventanas
+local function ReorganizarTodo()
+    for i, win in ipairs(windows) do
+        win.Position = UDim2.new(0, 333 + ((i-1) * (globalWidth + globalPadding)), 0, win.Position.Y.Offset)
+        win.Size = UDim2.new(0, globalWidth, 0, win.Size.Y.Offset)
+    end
+end
+
+-- Función Dragify
+local function Dragify(obj)
+    local dragging, dragStart, startPos
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragStart = input.Position; startPos = obj.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    obj.InputEnded:Connect(function() dragging = false end)
+end
+
+-- Botón Maestro SLX (VERSION LOGO TOTAL)
+local ASSET_ID = "94561335572570"
+
+local MasterBtn = Instance.new("TextButton", Screen)
+MasterBtn.Size = UDim2.new(0, 45, 0, 45) -- Un poquito más grande para que luzca
+MasterBtn.Position = UDim2.new(0.9, -20, 0, 520)
+MasterBtn.BackgroundTransparency = 1 -- Hacemos el fondo invisible we
+MasterBtn.Text = "" 
+Instance.new("UICorner", MasterBtn).CornerRadius = UDim.new(1,0)
+
+-- Metemos el Logo de La Z que llene TODO el espacio
+local MIcon = Instance.new("ImageLabel", MasterBtn)
+MIcon.Size = UDim2.new(1, 0, 1, 0) -- Tamaño al 100% (Exacto)
+MIcon.Position = UDim2.new(0, 0, 0, 0)
+MIcon.BackgroundTransparency = 1
+MIcon.Image = "rbxthumb://type=Asset&id=" .. ASSET_ID .. "&w=420&h=420"
+MIcon.ZIndex = MasterBtn.ZIndex + 1
+MIcon.ScaleType = Enum.ScaleType.Crop -- Para que se ajuste perfecto al circulo
+Instance.new("UICorner", MIcon).CornerRadius = UDim.new(1,0)
+
+-- El borde arcoíris pegado a la imagen
+local MStroke = Instance.new("UIStroke", MasterBtn)
+MStroke.Thickness = 2
+MStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+Dragify(MasterBtn)
+
+-- Tu arcoíris en el puro borde de la imagen
+RunService.RenderStepped:Connect(function() 
+    MStroke.Color = rainbowColor 
+end)
+
+-- Tu función de abrir ventanas
+MasterBtn.MouseButton1Click:Connect(function()
+    for _, win in pairs(windows) do 
+        win.Visible = not win.Visible 
+    end
+end)
+
+-- Sistema de Ventanas (Library)
+local library = {}
+function library:Window(name)
+    local MainFrame = Instance.new("Frame", Screen)
+    MainFrame.Name = name
+    MainFrame.Size = UDim2.new(0, globalWidth, 0, 25); MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10); MainFrame.BackgroundTransparency = 0.1; MainFrame.ClipsDescendants = true
+    -- Espaciado de 300 como pediste
+    MainFrame.Position = UDim2.new(0, 326 + (#windows * (globalWidth + globalPadding)), 0, 10)
+    table.insert(windows, MainFrame); Dragify(MainFrame)
+
+    local Header = Instance.new("Frame", MainFrame); Header.Size = UDim2.new(1, 0, 0, 25)
+    RunService.RenderStepped:Connect(function() Header.BackgroundColor3 = rainbowColor end)
+    local Title = Instance.new("TextLabel", Header); Title.Size = UDim2.new(1, 0, 1, 0); Title.Text = "  " .. name:upper(); Title.Font = Enum.Font.GothamBold; Title.TextSize = 10; Title.TextColor3 = Color3.new(0,0,0); Title.BackgroundTransparency = 1; Title.TextXAlignment = Enum.TextXAlignment.Left
+    local WinMinBtn = Instance.new("TextButton", Header); WinMinBtn.Name = "WinMinBtn"; WinMinBtn.Size = UDim2.new(0, 25, 0, 25); WinMinBtn.Position = UDim2.new(1, -25, 0, 0); WinMinBtn.Text = "-"; WinMinBtn.Font = Enum.Font.GothamBold; WinMinBtn.BackgroundTransparency = 1
+
+    local Container = Instance.new("Frame", MainFrame); Container.Position = UDim2.new(0, 0, 0, 25); Container.Size = UDim2.new(1, 0, 0, 0); Container.BackgroundTransparency = 1
+    local UIList = Instance.new("UIListLayout", Container); UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local isWinOpen = true
+    local function UpdateSize()
+        MainFrame.Size = isWinOpen and UDim2.new(0, globalWidth, 0, UIList.AbsoluteContentSize.Y + 25) or UDim2.new(0, globalWidth, 0, 25)
+    end
+    UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateSize)
+
+    WinMinBtn.MouseButton1Click:Connect(function()
+        isWinOpen = not isWinOpen; WinMinBtn.Text = isWinOpen and "-" or "+"; Container.Visible = isWinOpen; UpdateSize()
+    end)
+
+    local funcs = {}
+    function funcs:Toggle(text, callback)
+        local MainBtnFrame = Instance.new("Frame", Container); MainBtnFrame.Size = UDim2.new(1, 0, 0, 22); MainBtnFrame.BackgroundTransparency = 1
+        local Btn = Instance.new("TextButton", MainBtnFrame); Btn.Size = UDim2.new(1, 0, 1, 0); Btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Btn.Text = "  " .. text; Btn.Font = Enum.Font.GothamMedium; Btn.TextSize = 10; Btn.TextColor3 = Color3.fromRGB(200, 200, 200); Btn.TextXAlignment = Enum.TextXAlignment.Left; Btn.BorderSizePixel = 0
+        
+        local subContainer = Instance.new("Frame", Container); subContainer.Visible = false; subContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 15); subContainer.BorderSizePixel = 0
+        local SubList = Instance.new("UIListLayout", subContainer)
+
+        Btn.MouseButton1Click:Connect(function()
+            local active = Btn.TextColor3 == Color3.fromRGB(200, 200, 200)
+            callback(active); Btn.TextColor3 = active and rainbowColor or Color3.fromRGB(200, 200, 200)
+        end)
+
+        local subFuncs = {}
+        local function EnsurePlus()
+            if not MainBtnFrame:FindFirstChild("Plus") then
+                local Plus = Instance.new("TextButton", MainBtnFrame); Plus.Name = "Plus"; Plus.Size = UDim2.new(0, 25, 1, 0); Plus.Position = UDim2.new(1, -25, 0, 0); Plus.Text = "+"; Plus.TextColor3 = Color3.new(1,1,1); Plus.BackgroundTransparency = 1
+                Plus.MouseButton1Click:Connect(function()
+                    subContainer.Visible = not subContainer.Visible; Plus.Text = subContainer.Visible and "-" or "+"
+                    subContainer.Size = subContainer.Visible and UDim2.new(1, 0, 0, SubList.AbsoluteContentSize.Y) or UDim2.new(1, 0, 0, 0)
+                end)
+            end
+        end
+
+        function subFuncs:AddSubToggle(subT, subC)
+            EnsurePlus()
+            local SBtn = Instance.new("TextButton", subContainer); SBtn.Size = UDim2.new(1, 0, 0, 20); SBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25); SBtn.Text = "    • " .. subT; SBtn.Font = Enum.Font.Gotham; SBtn.TextSize = 9; SBtn.TextColor3 = Color3.fromRGB(150, 150, 150); SBtn.TextXAlignment = Enum.TextXAlignment.Left; SBtn.BorderSizePixel = 0
+            SBtn.MouseButton1Click:Connect(function()
+                local sActive = SBtn.TextColor3 == Color3.fromRGB(150, 150, 150)
+                subC(sActive); SBtn.TextColor3 = sActive and Color3.new(1,1,1) or Color3.fromRGB(150, 150, 150)
+            end)
+        end
+
+        function subFuncs:AddSubInput(label, default, min, max, subC)
+            EnsurePlus()
+            local Lbl = Instance.new("TextLabel", subContainer); Lbl.Size = UDim2.new(1, 0, 0, 18); Lbl.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Lbl.Text = "      " .. label; Lbl.Font = Enum.Font.GothamBold; Lbl.TextSize = 8; Lbl.TextColor3 = Color3.fromRGB(130, 130, 130); Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.BorderSizePixel = 0
+            local Box = Instance.new("TextBox", subContainer); Box.Size = UDim2.new(1, 0, 0, 20); Box.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Box.Text = tostring(default); Box.Font = Enum.Font.GothamMedium; Box.TextSize = 9; Box.TextColor3 = Color3.new(1, 1, 1); Box.BorderSizePixel = 0
+            Box.FocusLost:Connect(function()
+                local num = tonumber(Box.Text); if num then num = math.clamp(num, min, max); Box.Text = tostring(num); subC(num) else Box.Text = tostring(default) end
+            end)
+        end
+        return subFuncs
+    end
+
+    function funcs:Tag(label)
+        local Lbl = Instance.new("TextLabel", Container)
+        Lbl.Size = UDim2.new(1, 0, 0, 18)
+        Lbl.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        Lbl.Text = "  " .. label:upper()
+        Lbl.Font = Enum.Font.GothamBold
+        Lbl.TextSize = 9
+        Lbl.TextColor3 = Color3.fromRGB(0, 255, 255)
+        Lbl.TextXAlignment = Enum.TextXAlignment.Left
+        Lbl.BorderSizePixel = 0
+        return funcs
+    end
+
+    function funcs:Input(label, default, min, max, callback)
+        local Lbl = Instance.new("TextLabel", Container); Lbl.Size = UDim2.new(1, 0, 0, 18); Lbl.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Lbl.Text = "  " .. label; Lbl.Font = Enum.Font.GothamBold; Lbl.TextSize = 9; Lbl.TextColor3 = Color3.fromRGB(150, 150, 150); Lbl.TextXAlignment = Enum.TextXAlignment.Left; Lbl.BorderSizePixel = 0
+        local Box = Instance.new("TextBox", Container); Box.Size = UDim2.new(1, 0, 0, 22); Box.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Box.Text = tostring(default); Box.Font = Enum.Font.GothamMedium; Box.TextSize = 10; Box.TextColor3 = Color3.new(1, 1, 1); Box.BorderSizePixel = 0
+        Box.FocusLost:Connect(function()
+            local num = tonumber(Box.Text); if num then num = math.clamp(num, min, max); Box.Text = tostring(num); callback(num) else Box.Text = tostring(default) end
+        end)
+    end
+    return funcs
+end
+
+--// CATEGORÍAS //--
+local Combat = library:Window("Combat")
+local Visuals = library:Window("Visuals")
+local Zslx = library:Window("Word")
+local Evento = library:Window("Evento")
+local Settings = library:Window("Settings")
+
+Combat:Tag("Secion ( God mode)")
+
+Combat:Tag("Secion (Tp kill)")
+
+Combat:Tag("Secion (Others)")
+
+Visuals:Tag("Secion esp Universal")
+
+Visuals:Tag("Secion (NUevo leon)")
+
+-- Settings
+Settings:Input("ANCHO VENTANA", globalWidth, 50, 400, function(v) globalWidth = v; ReorganizarTodo() end)
+Settings:Input("ESPACIADO", globalPadding, 0, 50, function(v) globalPadding = v; ReorganizarTodo() end)
+
+Zslx:Tag("Secion (Fly)")
