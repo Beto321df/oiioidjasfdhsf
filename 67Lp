@@ -727,7 +727,7 @@ local TabBypass = Window:CreateTab("Bypass ⚓", 4483362458)
 
 
 
-
+local SectionF2 = TabBypass:CreateSection("Proximamente 🚖")
 
 
 
