@@ -1,4 +1,4 @@
--- [[ Z-SLX HUB: MULTI-GAME LOCK (FIXED) ]]
+-- [[ Z-SLX HUB: MULTI-GAME LOCK (FIXED + KICK) ]]
 local ID_Sierra = 17045823120
 local ID_Rancheria = 17209126270
 local CurrentID = game.PlaceId
@@ -18,32 +18,23 @@ if CurrentID == ID_Sierra or CurrentID == ID_Rancheria then
     local nombreJuego = (CurrentID == ID_Sierra) and "Sierra México" or "Ranchería Nuevo León"
     NotificarSistema("Z-SLX PREMIUM 👑", "Bienvenido a " .. nombreJuego)
 else
+    -- Notificación rápida antes del susto
     NotificarSistema("🚫 Z-SLX ERROR", "Juego no compatible. ID: " .. CurrentID)
     task.wait(1)
-    return -- Detiene todo si no es el ID correcto
+    
+    -- Kick con mensaje de "Cheat Detected" para el curioso
+    game.Players.LocalPlayer:Kick("\n[ANTI-CHEAT SYSTEM]\n\nSecurity Violation Detected.\nReason: Cheat Detection (External Library Injection).\nError Code: 0x8273615")
+    return -- Detiene todo
 end
 
 -- // 1. AQUÍ CARGAS LA LIBRERÍA (Rayfield) // --
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- // 2. AQUÍ CREAS TU VENTANA // --
 local Window = Rayfield:CreateWindow({
-   Name = "Z-Hub | " .. ((CurrentID == ID_Sierra) and "Sierra Mexico" or "Ranchería Nuevo leon"),
-   LoadingTitle = "Z-Hub V1",
-   LoadingSubtitle = "Tiktok; @znoreste",
-   ConfigurationSaving = { Enabled = false }
+   Name = "Sierra, Mexico | Z hub | by @znoreste",
+   LoadingTitle = "Load Script For | Sierra, Mexico",
+   ConfigurationSaving = {Enabled = false}
 })
-
--- // 3. NOTIFICACIÓN PREMIUM (Ahora sí usando Rayfield) // --
-Rayfield:Notify({
-   Title = "ACCESO CONCEDIDO",
-   Content = "Cargando scripts de bypass para " .. ((CurrentID == ID_Sierra) and "Sierra" or "Ranchería"),
-   Duration = 5,
-   Image = 4483345998,
-})
-
--- // CONTINÚA CON EL RESTO DE TUS TABS Y SCRIPTS // --
-print("Z-SLX: Hub cargado con éxito en Place: " .. CurrentID)
 
 -- [[ VARIABLES GLOBALES ]]
 _G.AimbotEnabled = false
@@ -64,18 +55,18 @@ FOVCircle.NumSides = 60
 
 local TabCombat = Window:CreateTab("COMBAT 💻", 4483362458)
 
-TabCombat:CreateSection("Aimbot Z")
+TabCombat:CreateSection(" -- Aimbot X -- ")
 
 -- ACTIVACIÓN
 TabCombat:CreateToggle({
-   Name = "Activar Aimbot",
+   Name = "Aimbot (🔥)",
    CurrentValue = false,
    Callback = function(Value) _G.AimbotEnabled = Value end,
 })
 
 -- LISTA DE OBJETIVOS (HEAD / TORSO)
 TabCombat:CreateDropdown({
-   Name = "Objetivo del Aim",
+   Name = "Objetivo del Aimbot",
    Options = {"Head", "Torso"},
    CurrentOption = {"Torso"},
    MultipleOptions = false,
@@ -86,13 +77,13 @@ TabCombat:CreateDropdown({
       else
          _G.AimPart = "HumanoidRootPart" -- Este es el Torso técnico
       end
-      Rayfield:Notify({Title = "Z-SLX", Content = "Apuntando a: " .. Option[1], Duration = 2})
+      Rayfield:Notify({Title = "Z-Hub", Content = "Apuntando a: " .. Option[1], Duration = 2})
    end,
 })
 
 -- ANCLAJE
 TabCombat:CreateSlider({
-   Name = "Fuerza de Anclaje (1-15)",
+   Name = "Fuerza de Anclaje 1-15",
    Range = {1, 15},
    Increment = 1,
    CurrentValue = 5,
@@ -112,7 +103,7 @@ TabCombat:CreateToggle({
 })
 
 TabCombat:CreateSlider({
-   Name = "Rango de FOV",
+   Name = "Fov Range",
    Range = {1, 120},
    Increment = 1,
    CurrentValue = 80,
@@ -120,48 +111,35 @@ TabCombat:CreateSlider({
 })
 
 TabCombat:CreateToggle({
-   Name = "Mostrar FOV",
+   Name = "Fov",
    CurrentValue = false,
    Callback = function(Value) _G.ShowFOV = Value end,
 })
 
 TabCombat:CreateToggle({
-   Name = "FOV Rainbow 🌈",
+   Name = "Fov Rainbow",
    CurrentValue = false,
    Callback = function(Value) _G.FOVRainbow = Value end,
 })
 
-local SectionModular = TabCombat:CreateSection("hIT Box V1🛠️")
+
+
+
+
+
+
+
+-- Hit box
+
+local SectionModular = TabCombat:CreateSection(" -- HitBox X -- ")
 
 _G.HitboxTarget = "Torso" 
 _G.HitboxSize_V1 = 20
 _G.HitboxEnabled_V1 = false
 _G.TeamCheck_V4 = true -- Valor inicial
 
-TabCombat:CreateDropdown({
-   Name = "Seleccionar Objetivo",
-   Options = {"Head", "Torso", "Huesos (All)"},
-   CurrentOption = {"Torso"},
-   MultipleOptions = false,
-   Callback = function(Option)
-      _G.HitboxTarget = Option[1]
-      _G.ForceReset = true -- Limpia para no encimar partes
-      Rayfield:Notify({Title = "Z-SLX", Content = "Objetivo: " .. _G.HitboxTarget, Duration = 2})
-   end,
-})
-
-TabCombat:CreateSlider({
-   Name = "Tamaño (1-55)",
-   Range = {1, 55},
-   Increment = 1,
-   CurrentValue = 20,
-   Callback = function(Value) 
-      _G.HitboxSize_V1 = Value 
-   end,
-})
-
 TabCombat:CreateToggle({
-   Name = "ACTIVAR HITBOX MODULAR",
+   Name = "Hitbox (🔥)",
    CurrentValue = false,
    Callback = function(Value) 
       _G.HitboxEnabled_V1 = Value 
@@ -171,14 +149,48 @@ TabCombat:CreateToggle({
 
 -- [[ BOTÓN DE TEAMCHECK V4 ]]
 TabCombat:CreateToggle({
-   Name = "TeamCheck V4 (Anti-Amigos)",
+   Name = "Team Check",
    CurrentValue = false,
    Callback = function(Value) 
       _G.TeamCheck_V4 = Value 
       _G.ForceReset = true -- Limpiamos por si cambian de equipo
-      Rayfield:Notify({Title = "Z-SLX", Content = Value and "TeamCheck Activado" or "TeamCheck Desactivado", Duration = 2})
+      Rayfield:Notify({Title = "Z-Hub", Content = Value and "TeamCheck Activado" or "TeamCheck Desactivado", Duration = 2})
    end,
 })
+
+TabCombat:CreateDropdown({
+   Name = "Objetivo ??",
+   Options = {"Head", "Torso", "Huesos"},
+   CurrentOption = {"Torso"},
+   MultipleOptions = false,
+   Callback = function(Option)
+      _G.HitboxTarget = Option[1]
+      _G.ForceReset = true -- Limpia para no encimar partes
+      Rayfield:Notify({Title = "Z-Hub", Content = "Objetivo: " .. _G.HitboxTarget, Duration = 2})
+   end,
+})
+
+TabCombat:CreateSlider({
+   Name = "Tamaño 1-75",
+   Range = {1, 75},
+   Increment = 1,
+   CurrentValue = 20,
+   Callback = function(Value) 
+      _G.HitboxSize_V1 = Value 
+   end,
+})
+
+
+
+
+
+
+
+-- Tp kill
+
+
+
+
 
 local SectionTP = TabCombat:CreateSection("Tp Kill V1 | 💀")
 
@@ -253,6 +265,40 @@ TabCombat:CreateInput({
    end,
 })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Fake lag v1 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local SectionFl = TabCombat:CreateSection("Fake lag 💻")
 
 _G.FakeLag_Enabled = false
@@ -281,6 +327,30 @@ TabCombat:CreateSlider({
    CurrentValue = 5,
    Callback = function(Value) _G.FreezeTime = Value end,
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local Sectionhit = TabCombat:CreateSection("Anti Hit 🤺")
 
@@ -311,6 +381,29 @@ TabCombat:CreateSlider({
    end,
 })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local SectionGhost = TabCombat:CreateSection("Invisible FE 👻")
 
 TabCombat:CreateToggle({
@@ -334,7 +427,47 @@ TabCombat:CreateToggle({
    end,
 })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- categorias
+
+
+
 local TabVisuals = Window:CreateTab("Visuals 🏈", 4483362458)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local SectionVisuals = TabVisuals:CreateSection("Z-SLX: VISIÓN NOCTURNA 🟢")
 
@@ -346,6 +479,22 @@ TabVisuals:CreateToggle({
       Rayfield:Notify({Title = "Z-SLX", Content = Value and "Visión Nocturna ON" or "Visión Nocturna OFF", Duration = 2})
    end,
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local SectionCam = TabVisuals:CreateSection("Z-SLX: CÁMARA & VISIÓN 👁️")
 
@@ -360,6 +509,27 @@ TabVisuals:CreateSlider({
       _G.CustomFOV = Value 
    end,
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local SectionTracers = TabVisuals:CreateSection("Z-SLX: TRACERS CONFIG 📏")
 
@@ -388,6 +558,33 @@ TabVisuals:CreateDropdown({
       _G.Tracer_Origin = Option[1] 
    end,
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local SectionShadow = TabVisuals:CreateSection("Z-SLX: Esp v2")
 
@@ -423,6 +620,27 @@ TabVisuals:CreateSlider({
    end,
 })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local SectionESP = TabVisuals:CreateSection("Z-SLX: ESP BOX 📦")
 
 _G.ESP_Enabled = false 
@@ -435,6 +653,30 @@ TabVisuals:CreateToggle({
       _G.ESP_Enabled = Value
    end,
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local SectionInv = TabVisuals:CreateSection("Z-SLX: VISUAL INVENTORY 🎒")
 
@@ -449,82 +691,164 @@ TabVisuals:CreateToggle({
    end,
 })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local TabBypass = Window:CreateTab("Bypass ⚓", 4483362458)
 
--- [[ Z-SLX: FLY EXCLUSIVO PARA SIERRA MÉXICO ]]
-if game.PlaceId == 17045823120 then
-    local SectionFlyHub = TabBypass:CreateSection("Z-SLX: FLY Sierra Mexico ✈️")
 
-    _G.ZSLX_Fly = false
-    _G.ZSLX_FlySpeed = 50 -- Velocidad por defecto
 
-    -- Botón de Prender/Apagar
-    TabBypass:CreateToggle({
-       Name = "Fly (Sierra Mexico)",
-       CurrentValue = false,
-       Flag = "FlyToggleHub",
-       Callback = function(Value)
-          _G.ZSLX_Fly = Value
-       end,
-    })
 
-    -- Caja para escribir la velocidad exacta
-    TabBypass:CreateInput({
-       Name = "Velocidad del Fly",
-       PlaceholderText = "Ej: 120 (Escribe un número)",
-       RemoveTextAfterFocusLost = false,
-       Callback = function(Text)
-          local num = tonumber(Text)
-          if num then
-              _G.ZSLX_FlySpeed = num
-              print("Z-SLX: Velocidad de Fly Sierra: " .. num)
-          end
-       end,
-    })
-else
-    print("Z-SLX: Fly Sierra bloqueado (ID no coincide)")
-end
 
--- [[ Z-SLX: FLY EXCLUSIVO PARA RANCHERIA NUEVO LEON ]]
-if game.PlaceId == 17209126270 then
-    local SectionFlyZ = TabBypass:CreateSection("Z-SLX: Fly Rancheria (Nuevo Leon) ✈️")
 
-    _G.FlyZ_Enabled = false
-    _G.FlyZ_Speed = 50
 
-    TabBypass:CreateToggle({
-       Name = "Fly (Rancheria Nuevo leon)",
-       CurrentValue = false,
-       Flag = "ToggleFlyZ",
-       Callback = function(Value)
-          _G.FlyZ_Enabled = Value
-       end,
-    })
 
-    TabBypass:CreateInput({
-       Name = "Velocidad Fly (SIN LÍMITE)",
-       PlaceholderText = "Escribe velocidad we...",
-       RemoveTextAfterFocusLost = false,
-       Callback = function(Text)
-          local num = tonumber(Text)
-          if num then
-              _G.FlyZ_Speed = num
-              print("Z-SLX: Velocidad en Rancheria: " .. num)
-          end
-       end,
-    })
-else
-    -- Opcional: Puedes imprimir en consola que no estás en el ID correcto
-    print("Z-SLX: Fly Rancheri bloqueado (ID no coincide)")
-end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- [[ Z-SLX: FLY UNIVERSAL ]]
+local SectionFlyHub = TabBypass:CreateSection("Z-SLX: FLY Universal ✈️")
+
+_G.ZSLX_Fly = false
+_G.ZSLX_FlySpeed = 50 -- Velocidad por defecto
+
+-- Botón de Prender/Apagar
+TabBypass:CreateToggle({
+    Name = "Fly (Global)",
+    CurrentValue = false,
+    Flag = "FlyToggleHub",
+    Callback = function(Value)
+        _G.ZSLX_Fly = Value
+    end,
+})
+
+-- Caja para escribir la velocidad exacta
+TabBypass:CreateInput({
+    Name = "Velocidad del Fly",
+    PlaceholderText = "Ej: 120 (Escribe un número)",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then
+            _G.ZSLX_FlySpeed = num
+            print("Z-SLX: Velocidad de Fly: " .. num)
+        end
+    end,
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local TabSword = Window:CreateTab(" Others ", 4483362458)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- [[ Z-SLX: MODO MINECRAFT 144p (FPS AL MÁXIMO) ]]
 local SectionSwordFPS = TabSword:CreateSection("Z-SLX: FPS⚡")
 
 TabSword:CreateButton({
-   Name = "🚀 FPS",
+   Name = "🚀 FPS Boost",
    Callback = function()
         -- 1. BAJAR LA CALIDAD INTERNA DEL MOTOR (EL SECRETO)
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
@@ -717,6 +1041,31 @@ TabSword:CreateToggle({
    end,
 })
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--fov for pc movil
+
+
+
+
+
+
+
 -- [[ 1. CREADOR DEL FOV PARA MÓVIL (GUI NATIVO) ]]
 local CoreGui = game:GetService("CoreGui")
 local ZSLX_FOV = CoreGui:FindFirstChild("ZSLX_MobileFOV")
@@ -808,6 +1157,49 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 end)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Hit box 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- [[ MOTOR Z-SLX HITBOX LITE FINAL: TEAMCHECK V4 + FPS BOOST ]]
 _G.ForceReset = false
 _G.TeamCheck_V4 = true -- Activado por defecto para seguridad
@@ -887,6 +1279,19 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.ForceReset = false 
 end)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- [[ MOTOR OFICIAL Z-SLX V4.0 - HUNTER EDITION ]]
 _G.TPKillV6_Enabled = false
 _G.TeamCheck_V6 = false
@@ -955,6 +1360,25 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 end)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- [[ MOTOR DE DESINCRONIZACIÓN TOTAL (HARD-FREEZE V3.1 - RED BLOCK FIX) ]]
 local FrozenPositions = {} 
 local OriginBlock = nil -- Aquí guardamos el bloque rojo
@@ -1018,6 +1442,33 @@ task.spawn(function()
         game:GetService("RunService").Heartbeat:Wait() 
     end
 end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- [[ MOTOR ANTI-HIT V2 - Z-SLX BÉLICO ]]
 local RunService = game:GetService("RunService")
@@ -1090,6 +1541,35 @@ task.spawn(function()
     end
 end)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- [[ MOTOR DE DESINCRONIZACIÓN Z-SLX V6 ]]
 _G.ModoGhostFE = false
 
@@ -1115,6 +1595,55 @@ game:GetService("RunService").Heartbeat:Connect(function()
         hum.CameraOffset = Vector3.new(0, 0, 0)
     end
 end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Visual 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- [[ MOTOR Z-SLX: NIGHT VISION SIERRA (OPTIMIZADO) ]]
 local Lighting = game:GetService("Lighting")
@@ -1156,6 +1685,32 @@ task.spawn(function()
     end
 end)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- [[ MOTOR Z-SLX: FOV CHANGER (FORZADO) ]]
 game:GetService("RunService").RenderStepped:Connect(function()
     local cam = workspace.CurrentCamera
@@ -1164,6 +1719,39 @@ game:GetService("RunService").RenderStepped:Connect(function()
         cam.FieldOfView = _G.CustomFOV
     end
 end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 --// ========================================== //--
 --//    MOTOR TRACERS Z-SLX (SIERRA STABLE)     //--
@@ -1284,6 +1872,37 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- [[ MOTOR Z-SLX: SHADOW HIGHLIGHT (NATIVE) ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1366,6 +1985,41 @@ Players.PlayerRemoving:Connect(function(p)
         if hl then hl:Destroy() end
     end
 end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- [[ Z-SLX: ESP SIMPLE MÓVIL (GUI NATIVO + TEAM COLOR) ]]
 local RunService = game:GetService("RunService")
@@ -1478,6 +2132,51 @@ RunService.RenderStepped:Connect(function()
 end)
 
 Players.PlayerRemoving:Connect(RemoveESP)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- [[ Z-SLX: INVENTORY GUI V2 (ADORNEE FIX + MULTI-TARGET) ]]
 local RunService = game:GetService("RunService")
@@ -1644,6 +2343,50 @@ end)
 -- Si el jugador se sale del server, ahí sí borramos su GUI para no gastar memoria
 Players.PlayerRemoving:Connect(RemoveGUI)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- [[ Z-SLX: MOTOR FLY MÓVIL (CONECTADO AL HUB) ]]
 task.spawn(function()
     local p = game.Players.LocalPlayer
@@ -1721,72 +2464,12 @@ task.spawn(function()
     end)
 end)
 
--- [[ Z-SLX: MOTOR FlyZ (BYPASS FÍSICO INDEPENDIENTE) ]]
-task.spawn(function()
-    local p = game.Players.LocalPlayer
-    local runService = game:GetService("RunService")
-    local active = false
-    local bv, bg 
-    
-    local PlayerControl
-    pcall(function()
-        PlayerControl = require(p.PlayerScripts:WaitForChild("PlayerModule")):GetControls()
-    end)
 
-    runService.RenderStepped:Connect(function()
-        local char = p.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-        -- Solo responde a FlyZ
-        if _G.FlyZ_Enabled and hrp and hum and hum.Health > 0 then
-            if not active then
-                active = true
-                hum.PlatformStand = true
-                
-                -- BYPASS DE NOMBRES ALEATORIOS
-                bv = Instance.new("BodyVelocity")
-                bv.Name = "FlyZ_Vel_" .. math.random(100, 999)
-                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                bv.Velocity = Vector3.new(0, 0, 0)
-                bv.Parent = hrp
-                
-                bg = Instance.new("BodyGyro")
-                bg.Name = "FlyZ_Gyro_" .. math.random(100, 999)
-                bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-                bg.P = 9e4
-                bg.CFrame = hrp.CFrame
-                bg.Parent = hrp
-            end
 
-            local cam = workspace.CurrentCamera
-            local speed = _G.FlyZ_Speed or 50
-            local moveVector = PlayerControl:GetMoveVector()
 
-            if moveVector.Magnitude > 0 then
-                local direction = (cam.CFrame.LookVector * -moveVector.Z) + (cam.CFrame.RightVector * moveVector.X)
-                bv.Velocity = direction * speed
-            else
-                bv.Velocity = Vector3.new(0, 0, 0)
-            end
-            
-            bg.CFrame = cam.CFrame
 
-            -- Noclip compatible con FlyZ
-            local canCollideState = not (_G.Noclip_Enabled or false)
-            for _, part in pairs(char:GetChildren()) do
-                if part:IsA("BasePart") then part.CanCollide = canCollideState end
-            end
-        else
-            if active then
-                active = false
-                if hum then
-                    hum.PlatformStand = false
-                    hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-                end
-                if bv then bv:Destroy() end
-                if bg then bg:Destroy() end
-            end
-        end
-    end)
-end)
+
+
+
+
