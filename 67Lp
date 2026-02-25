@@ -203,48 +203,6 @@ TabCombat:CreateSlider({
 
 local TabVisuals = Window:CreateTab("Visuals 🏈", 4483362458)
 
-
-
-
-
-
-
--- [[ BOTÓN Z-HUB: SHADOW ESP ]]
-TabVisuals:CreateSection(" -- Filtros Visuales -- ")
-
-TabVisuals:CreateToggle({
-   Name = "Shadow Wallhack (🔴)",
-   CurrentValue = false,
-   Flag = "ToggleShadowZ", 
-   Callback = function(Value)
-      _G.ShadowESP = Value
-      
-      -- Limpieza inmediata al apagar para evitar rastro en los logs
-      if not Value then
-          for _, p in pairs(game.Players:GetPlayers()) do
-              if p.Character and p.Character:FindFirstChild(SHADOW_NAME) then
-                  p.Character[SHADOW_NAME]:Destroy()
-              end
-          end
-      end
-
-      Rayfield:Notify({
-         Title = "Z-Hub",
-         Content = "Shadow ESP: " .. (Value and "Activado" or "Desactivado"),
-         Duration = 2,
-         Image = 4483362458,
-      })
-   end,
-})
-
-
-
-
-
-
-
-
-
 local TabBypass = Window:CreateTab("Bypass ⚓", 4483362458)
 
 local TabSword = Window:CreateTab(" Others ", 4483362458)
@@ -683,43 +641,3 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.Z_Force_Reset = false 
 end)
 
-
-
--- [[ CEREBRO Z-HUB: SHADOW ESP NATIVO ]]
-_G.ShadowESP = false
-local SHADOW_NAME = "Z_RenderFix" -- Nombre camuflado para bypass
-
-local function ManageShadows()
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= game.Players.LocalPlayer then
-            local char = p.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local effect = char:FindFirstChild(SHADOW_NAME)
-                
-                if _G.ShadowESP then
-                    -- Si está activo y no lo tiene, se lo inyectamos
-                    if not effect then
-                        local hl = Instance.new("Highlight")
-                        hl.Name = SHADOW_NAME
-                        hl.Parent = char
-                        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- El Wallhack
-                        hl.FillColor = Color3.fromRGB(255, 0, 0) -- Rojo Z fijo
-                        hl.FillTransparency = 0.5
-                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        hl.OutlineTransparency = 0
-                    end
-                else
-                    -- Limpieza total si se apaga el botón
-                    if effect then effect:Destroy() end
-                end
-            end
-        end
-    end
-end
-
--- Bucle de actualización (Cada 0.5s para no dar lag en móvil)
-task.spawn(function()
-    while task.wait(0.5) do
-        ManageShadows()
-    end
-end)
