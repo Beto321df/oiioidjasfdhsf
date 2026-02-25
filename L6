@@ -674,55 +674,77 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.Z_Force_Reset = false 
 end)
 
--- [[ MOTOR ESP 2D REFORZADO ]]
-local cam = workspace.CurrentCamera
-local lp = game.Players.LocalPlayer
+-- [[ MOTOR ESP 360 STABLE - Z-HUB ]]
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
 
-local function CreateESP(p)
-    local box = Drawing.new("Square")
-    box.Visible = false
-    box.Color = Color3.new(1, 1, 1)
-    box.Thickness = 1.5
-    box.Filled = false
+-- Función para limpiar TODO cuando se apaga
+local function LimpiarESP()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Character then
+            -- Limpieza de Sombras (Shadow)
+            if v.Character:FindFirstChild("SLX_Shadow") then v.Character.SLX_Shadow:Destroy() end
+            -- Limpieza de Cajas (2D/3D)
+            if v.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = v.Character.HumanoidRootPart
+                if hrp:FindFirstChild("SLX_Box") then hrp.SLX_Box:Destroy() end
+                if hrp:FindFirstChild("SLX_Beam") then hrp.SLX_Beam:Destroy() end
+            end
+        end
+    end
+end
 
-    local function update()
-        local connection
-        connection = game:GetService("RunService").RenderStepped:Connect(function()
-            if _G.Z_ESP_Active and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p ~= lp then
-                local root = p.Character.HumanoidRootPart
-                local screenPos, onScreen = cam:WorldToViewportPoint(root.Position)
-
-                if onScreen then
-                    local dist = (cam.CFrame.Position - root.Position).Magnitude
-                    local sizeX = math.floor(2000 / dist)
-                    local sizeY = math.floor(3500 / dist)
-                    
-                    box.Size = Vector2.new(sizeX, sizeY)
-                    box.Position = Vector2.new(math.floor(screenPos.X - sizeX / 2), math.floor(screenPos.Y - sizeY / 2))
-                    
-                    if _G.Z_ESP_TeamColor and p.Team then
-                        box.Color = p.TeamColor.Color
-                    else
-                        box.Color = Color3.fromRGB(255, 255, 255)
-                    end
-                    box.Visible = true
-                else
-                    box.Visible = false
-                end
+local function CrearCaja360(p)
+    if p == lp then return end
+    
+    local function apply()
+        local char = p.Character or p.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart", 5)
+        
+        if hrp and not hrp:FindFirstChild("SLX_Box") then
+            -- Creamos un SelectionBox (Es 360 grados y no vibra)
+            local box = Instance.new("SelectionBox")
+            box.Name = "SLX_Box"
+            box.Adornee = char -- Se pega a todo el cuerpo
+            box.LineThickness = 0.05
+            box.Transparency = 0.2
+            box.ZIndex = 10
+            
+            -- Color por equipo
+            if _G.Z_ESP_TeamColor and p.Team then
+                box.Color3 = p.TeamColor.Color
             else
-                box.Visible = false
-                if not p.Parent then
-                    box:Remove()
-                    if connection then connection:Disconnect() end
+                box.Color3 = Color3.fromRGB(255, 255, 255)
+            end
+            
+            box.Parent = hrp
+        end
+    end
+    
+    p.CharacterAdded:Connect(apply)
+    if p.Character then apply() end
+end
+
+-- Bucle de actualización (Heartbeat es más suave para 360)
+game:GetService("RunService").Heartbeat:Connect(function()
+    if _G.Z_ESP_Active then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = v.Character.HumanoidRootPart
+                local box = hrp:FindFirstChild("SLX_Box")
+                
+                if not box then
+                    CrearCaja360(v)
+                else
+                    box.Visible = true
+                    -- Actualizar color en tiempo real si cambian de equipo
+                    if _G.Z_ESP_TeamColor and v.Team then
+                        box.Color3 = v.TeamColor.Color
+                    end
                 end
             end
-        end)
+        end
+    else
+        LimpiarESP() -- Ejecuta tu bloque de limpieza si el botón está en OFF
     end
-    coroutine.wrap(update)()
-end
-
--- Conexiones de arranque
-game.Players.PlayerAdded:Connect(CreateESP)
-for _, player in pairs(game.Players:GetPlayers()) do
-    if player ~= lp then CreateESP(player) end
-end
+end)
