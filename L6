@@ -208,27 +208,34 @@ local TabVisuals = Window:CreateTab("Visuals 🏈", 4483362458)
 
 
 
--- [[ Pestaña de Visuales ]]
-local SectionESP = TabVisuals:CreateSection(" -- Rastreo -- ")
+-- [[ SECCIÓN DE VISUALES Z-HUB ]]
+local SectionESP = TabVisuals:CreateSection(" -- Rastreo 360 -- ")
 
+-- Variables Globales (Conectadas al Cerebro)
 _G.Z_ESP_Active = false
 _G.Z_ESP_TeamColor = true
 
 TabVisuals:CreateToggle({
-   Name = "ESP 2D (Cajita 📦)",
+   Name = "ESP 360 (Cajita Estable 📦)",
    CurrentValue = false,
    Callback = function(Value)
       _G.Z_ESP_Active = Value
-   end, -- Cierre del Callback
-}) -- Cierre del Toggle
+      -- Si se apaga, el cerebro detectará _G.Z_ESP_Active como false y ejecutará la limpieza
+      if not Value then
+          Rayfield:Notify({Title = "Z-Hub", Content = "ESP Desactivado y Limpio", Duration = 2})
+      end
+   end,
+})
 
 TabVisuals:CreateToggle({
    Name = "Color por Equipo",
    CurrentValue = true,
    Callback = function(Value)
       _G.Z_ESP_TeamColor = Value
-   end, -- Cierre del Callback
-}) -- Cierre del Toggle
+      Rayfield:Notify({Title = "Z-Hub", Content = "Color de equipo: " .. (Value and "ON" or "OFF"), Duration = 1.5})
+   end,
+})
+
 
 
 
