@@ -681,7 +681,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.Z_Force_Reset = false 
 end)
 
--- [[ MOTOR ESP 2D GHOST PRO - Z-HUB ]]
+-- [[ MOTOR ESP 2D GHOST LIMPIO - Z-HUB ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local cam = workspace.CurrentCamera
@@ -689,33 +689,21 @@ local lp = Players.LocalPlayer
 
 local ESP_Table = {}
 
--- Función para crear los dibujos (Ahora con Outline para que no se vea chafa)
+-- Función para crear los dibujos (Línea fina y sin bordes)
 local function CreateESP(p)
-    local data = {}
-    
-    -- El borde negro (Outline)
-    data.outline = Drawing.new("Square")
-    data.outline.Visible = false
-    data.outline.Color = Color3.new(0, 0, 0)
-    data.outline.Thickness = 3 -- Más grueso para que resalte
-    data.outline.Transparency = 1
-    data.outline.Filled = false
+    local box = Drawing.new("Square")
+    box.Visible = false
+    box.Color = Color3.new(1, 1, 1)
+    box.Thickness = 1 -- Grosor al mínimo para que de lejos se vea nítido
+    box.Transparency = 1
+    box.Filled = false
 
-    -- La caja de color
-    data.box = Drawing.new("Square")
-    data.box.Visible = false
-    data.box.Color = Color3.new(1, 1, 1)
-    data.box.Thickness = 1.5
-    data.box.Transparency = 1
-    data.box.Filled = false
-
-    ESP_Table[p] = data
+    ESP_Table[p] = box
 end
 
 local function RemoveESP(p)
     if ESP_Table[p] then
-        ESP_Table[p].box:Remove()
-        ESP_Table[p].outline:Remove()
+        ESP_Table[p]:Remove()
         ESP_Table[p] = nil
     end
 end
@@ -723,10 +711,10 @@ end
 RunService.RenderStepped:Connect(function()
     if _G.Z_ESP_Active then
         for _, p in pairs(Players:GetPlayers()) do
-            -- FIX: Verificar que el mono esté vivo y tenga cuerpo (Evita que desaparezca al morir)
+            -- Checamos que esté vivo y spawneado
             if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
                 
-                local data = ESP_Table[p] or CreateESP(p) or ESP_Table[p]
+                local box = ESP_Table[p] or CreateESP(p) or ESP_Table[p]
                 local hrp = p.Character.HumanoidRootPart
                 local screenPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
 
@@ -737,39 +725,32 @@ RunService.RenderStepped:Connect(function()
                     local posX = math.floor(screenPos.X - sizeX / 2)
                     local posY = math.floor(screenPos.Y - sizeY / 2)
                     
-                    -- Posicionar Borde
-                    data.outline.Size = Vector2.new(sizeX, sizeY)
-                    data.outline.Position = Vector2.new(posX, posY)
+                    -- Posición exacta sin vibrar
+                    box.Size = Vector2.new(sizeX, sizeY)
+                    box.Position = Vector2.new(posX, posY)
                     
-                    -- Posicionar Caja
-                    data.box.Size = data.outline.Size
-                    data.box.Position = data.outline.Position
-                    
-                    -- Color
+                    -- Sistema de Color
                     if _G.Z_ESP_TeamColor and p.Team then
-                        data.box.Color = p.TeamColor.Color
+                        box.Color = p.TeamColor.Color
                     else
-                        data.box.Color = Color3.fromRGB(255, 255, 255)
+                        box.Color = Color3.fromRGB(255, 255, 255)
                     end
                     
-                    data.outline.Visible = true
-                    data.box.Visible = true
+                    box.Visible = true
                 else
-                    data.outline.Visible = false
-                    data.box.Visible = false
+                    box.Visible = false
                 end
             else
-                -- Ocultar si está muerto o fuera de pantalla
+                -- Si se muere, se apaga la caja instantáneamente
                 if ESP_Table[p] then
-                    ESP_Table[p].box.Visible = false
-                    ESP_Table[p].outline.Visible = false
+                    ESP_Table[p].Visible = false
                 end
             end
         end
     else
-        for _, data in pairs(ESP_Table) do
-            data.box.Visible = false
-            data.outline.Visible = false
+        -- Apagar todo si quitas el toggle en el menú
+        for _, box in pairs(ESP_Table) do
+            box.Visible = false
         end
     end
 end)
