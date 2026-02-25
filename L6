@@ -681,17 +681,14 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.Z_Force_Reset = false 
 end)
 
--- [[ MOTOR ESP 360 STABLE - Z-HUB ]]
+-- [[ MOTOR ESP 360 STABLE - Z-HUB FIX ]]
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
 
--- Función para limpiar TODO cuando se apaga
 local function LimpiarESP()
     for _, v in pairs(Players:GetPlayers()) do
         if v.Character then
-            -- Limpieza de Sombras (Shadow)
             if v.Character:FindFirstChild("SLX_Shadow") then v.Character.SLX_Shadow:Destroy() end
-            -- Limpieza de Cajas (2D/3D)
             if v.Character:FindFirstChild("HumanoidRootPart") then
                 local hrp = v.Character.HumanoidRootPart
                 if hrp:FindFirstChild("SLX_Box") then hrp.SLX_Box:Destroy() end
@@ -706,18 +703,19 @@ local function CrearCaja360(p)
     
     local function apply()
         local char = p.Character or p.CharacterAdded:Wait()
+        -- Si el ESP se apagó mientras esperábamos al personaje, cancelamos
+        if not _G.Z_ESP_Active then return end 
+        
         local hrp = char:WaitForChild("HumanoidRootPart", 5)
         
         if hrp and not hrp:FindFirstChild("SLX_Box") then
-            -- Creamos un SelectionBox (Es 360 grados y no vibra)
             local box = Instance.new("SelectionBox")
             box.Name = "SLX_Box"
-            box.Adornee = char -- Se pega a todo el cuerpo
+            box.Adornee = char 
             box.LineThickness = 0.05
             box.Transparency = 0.2
-            box.ZIndex = 10
+            -- ZIndex eliminado (causaba el error de tu foto)
             
-            -- Color por equipo
             if _G.Z_ESP_TeamColor and p.Team then
                 box.Color3 = p.TeamColor.Color
             else
@@ -732,7 +730,6 @@ local function CrearCaja360(p)
     if p.Character then apply() end
 end
 
--- Bucle de actualización (Heartbeat es más suave para 360)
 game:GetService("RunService").Heartbeat:Connect(function()
     if _G.Z_ESP_Active then
         for _, v in pairs(Players:GetPlayers()) do
@@ -744,7 +741,6 @@ game:GetService("RunService").Heartbeat:Connect(function()
                     CrearCaja360(v)
                 else
                     box.Visible = true
-                    -- Actualizar color en tiempo real si cambian de equipo
                     if _G.Z_ESP_TeamColor and v.Team then
                         box.Color3 = v.TeamColor.Color
                     end
@@ -752,6 +748,6 @@ game:GetService("RunService").Heartbeat:Connect(function()
             end
         end
     else
-        LimpiarESP() -- Ejecuta tu bloque de limpieza si el botón está en OFF
+        LimpiarESP() 
     end
 end)
