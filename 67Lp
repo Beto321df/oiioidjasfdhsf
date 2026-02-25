@@ -209,7 +209,7 @@ local TabVisuals = Window:CreateTab("Visuals 🏈", 4483362458)
 
 
 -- [[ SECCIÓN DE VISUALES Z-HUB ]]
-local SectionESP = TabVisuals:CreateSection(" -- Rastreo 360 -- ")
+local SectionESP = TabVisuals:CreateSection(" -- Esp 📱 -- ")
 
 -- Variables Globales (Conectadas al Cerebro)
 _G.Z_ESP_Active = false
