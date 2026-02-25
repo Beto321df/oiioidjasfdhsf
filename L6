@@ -681,7 +681,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.Z_Force_Reset = false 
 end)
 
--- [[ MOTOR ESP 2D GHOST LIMPIO - Z-HUB ]]
+-- [[ MOTOR ESP 3D WIREFRAME - Z-HUB ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local cam = workspace.CurrentCamera
@@ -689,68 +689,102 @@ local lp = Players.LocalPlayer
 
 local ESP_Table = {}
 
--- Función para crear los dibujos (Línea fina y sin bordes)
+-- Creamos las 12 líneas invisibles para armar la caja 3D
 local function CreateESP(p)
-    local box = Drawing.new("Square")
-    box.Visible = false
-    box.Color = Color3.new(1, 1, 1)
-    box.Thickness = 1 -- Grosor al mínimo para que de lejos se vea nítido
-    box.Transparency = 1
-    box.Filled = false
-
-    ESP_Table[p] = box
+    local lines = {}
+    for i = 1, 12 do
+        local line = Drawing.new("Line")
+        line.Color = Color3.new(1, 1, 1)
+        line.Thickness = 1 -- Línea súper fina y limpia (Cero bordes negros)
+        line.Transparency = 1
+        line.Visible = false
+        table.insert(lines, line)
+    end
+    ESP_Table[p] = lines
 end
 
 local function RemoveESP(p)
     if ESP_Table[p] then
-        ESP_Table[p]:Remove()
+        for _, line in pairs(ESP_Table[p]) do
+            line:Remove()
+        end
         ESP_Table[p] = nil
     end
 end
 
+-- Las conexiones de los puntos para formar la caja
+local pairs3D = {
+    {1,2}, {2,3}, {3,4}, {4,1}, -- Tapa superior
+    {5,6}, {6,7}, {7,8}, {8,5}, -- Base inferior
+    {1,5}, {2,6}, {3,7}, {4,8}  -- Postes laterales
+}
+
 RunService.RenderStepped:Connect(function()
     if _G.Z_ESP_Active then
         for _, p in pairs(Players:GetPlayers()) do
-            -- Checamos que esté vivo y spawneado
+            -- Seguro de vida: Solo dibuja si está vivo y completo
             if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
                 
-                local box = ESP_Table[p] or CreateESP(p) or ESP_Table[p]
+                local lines = ESP_Table[p] or CreateESP(p) or ESP_Table[p]
                 local hrp = p.Character.HumanoidRootPart
-                local screenPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
+                local cf = hrp.CFrame
+                
+                -- Tamaño de la caja 3D (Ajustada al cuerpo de Roblox)
+                local sX, sY, sZ = 2, 3, 1.5 
+                
+                -- Calculamos las 8 esquinas de la caja
+                local corners = {
+                    cf * CFrame.new(sX, sY, sZ).Position,
+                    cf * CFrame.new(-sX, sY, sZ).Position,
+                    cf * CFrame.new(-sX, sY, -sZ).Position,
+                    cf * CFrame.new(sX, sY, -sZ).Position,
+                    cf * CFrame.new(sX, -sY, sZ).Position,
+                    cf * CFrame.new(-sX, -sY, sZ).Position,
+                    cf * CFrame.new(-sX, -sY, -sZ).Position,
+                    cf * CFrame.new(sX, -sY, -sZ).Position,
+                }
 
-                if onScreen then
-                    local dist = (cam.CFrame.Position - hrp.Position).Magnitude
-                    local sizeX = math.floor(2500 / dist)
-                    local sizeY = math.floor(4000 / dist)
-                    local posX = math.floor(screenPos.X - sizeX / 2)
-                    local posY = math.floor(screenPos.Y - sizeY / 2)
-                    
-                    -- Posición exacta sin vibrar
-                    box.Size = Vector2.new(sizeX, sizeY)
-                    box.Position = Vector2.new(posX, posY)
-                    
-                    -- Sistema de Color
+                local screenCorners = {}
+                local allInFront = true
+
+                -- Proyectamos las 8 esquinas 3D a la pantalla 2D
+                for i = 1, 8 do
+                    local pos, onScreen = cam:WorldToViewportPoint(corners[i])
+                    screenCorners[i] = Vector2.new(pos.X, pos.Y)
+                    -- Verificamos que el enemigo esté enfrente de la cámara
+                    if pos.Z <= 0 then allInFront = false end
+                end
+
+                if allInFront then
+                    -- Color por equipo
+                    local teamColor = Color3.fromRGB(255, 255, 255)
                     if _G.Z_ESP_TeamColor and p.Team then
-                        box.Color = p.TeamColor.Color
-                    else
-                        box.Color = Color3.fromRGB(255, 255, 255)
+                        teamColor = p.TeamColor.Color
                     end
-                    
-                    box.Visible = true
+
+                    -- Dibujamos las 12 líneas
+                    for i = 1, 12 do
+                        local p1 = pairs3D[i][1]
+                        local p2 = pairs3D[i][2]
+                        lines[i].From = screenCorners[p1]
+                        lines[i].To = screenCorners[p2]
+                        lines[i].Color = teamColor
+                        lines[i].Visible = true
+                    end
                 else
-                    box.Visible = false
+                    for i = 1, 12 do lines[i].Visible = false end
                 end
             else
-                -- Si se muere, se apaga la caja instantáneamente
+                -- Si se muere o desaparece, apagamos las líneas
                 if ESP_Table[p] then
-                    ESP_Table[p].Visible = false
+                    for _, line in pairs(ESP_Table[p]) do line.Visible = false end
                 end
             end
         end
     else
-        -- Apagar todo si quitas el toggle en el menú
-        for _, box in pairs(ESP_Table) do
-            box.Visible = false
+        -- Apagar todo si se desactiva el botón
+        for _, lines in pairs(ESP_Table) do
+            for _, line in pairs(lines) do line.Visible = false end
         end
     end
 end)
