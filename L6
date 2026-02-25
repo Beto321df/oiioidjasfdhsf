@@ -681,49 +681,53 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.Z_Force_Reset = false 
 end)
 
--- [[ MOTOR ESP 360 STABLE - Z-HUB FIX ]]
+-- [[ MOTOR ESP 360 RAYOS X - Z-HUB FIX ]]
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
 
 local function LimpiarESP()
     for _, v in pairs(Players:GetPlayers()) do
         if v.Character then
+            -- Limpiamos el Highlight (Rayos X)
+            if v.Character:FindFirstChild("Z_Highlight") then v.Character.Z_Highlight:Destroy() end
+            -- Limpiamos rastros antiguos
             if v.Character:FindFirstChild("SLX_Shadow") then v.Character.SLX_Shadow:Destroy() end
             if v.Character:FindFirstChild("HumanoidRootPart") then
                 local hrp = v.Character.HumanoidRootPart
                 if hrp:FindFirstChild("SLX_Box") then hrp.SLX_Box:Destroy() end
-                if hrp:FindFirstChild("SLX_Beam") then hrp.SLX_Beam:Destroy() end
             end
         end
     end
 end
 
-local function CrearCaja360(p)
+local function CrearESP360(p)
     if p == lp then return end
     
     local function apply()
         local char = p.Character or p.CharacterAdded:Wait()
-        -- Si el ESP se apagó mientras esperábamos al personaje, cancelamos
         if not _G.Z_ESP_Active then return end 
         
-        local hrp = char:WaitForChild("HumanoidRootPart", 5)
+        -- Si ya tiene el ESP, no creamos otro
+        if char:FindFirstChild("Z_Highlight") then return end
+
+        -- [[ EL FIX: USAMOS HIGHLIGHT PARA VER TRAS PAREDES ]]
+        local hl = Instance.new("Highlight")
+        hl.Name = "Z_Highlight"
+        hl.Adornee = char
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- <--- ESTO ES EL WALLHACK
+        hl.FillTransparency = 0.5 -- Relleno suave
+        hl.OutlineTransparency = 0 -- Borde marcado
         
-        if hrp and not hrp:FindFirstChild("SLX_Box") then
-            local box = Instance.new("SelectionBox")
-            box.Name = "SLX_Box"
-            box.Adornee = char 
-            box.LineThickness = 0.05
-            box.Transparency = 0.2
-            -- ZIndex eliminado (causaba el error de tu foto)
-            
-            if _G.Z_ESP_TeamColor and p.Team then
-                box.Color3 = p.TeamColor.Color
-            else
-                box.Color3 = Color3.fromRGB(255, 255, 255)
-            end
-            
-            box.Parent = hrp
+        -- Color inicial
+        if _G.Z_ESP_TeamColor and p.Team then
+            hl.FillColor = p.TeamColor.Color
+            hl.OutlineColor = p.TeamColor.Color
+        else
+            hl.FillColor = Color3.fromRGB(255, 255, 255)
+            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
         end
+        
+        hl.Parent = char
     end
     
     p.CharacterAdded:Connect(apply)
@@ -733,16 +737,17 @@ end
 game:GetService("RunService").Heartbeat:Connect(function()
     if _G.Z_ESP_Active then
         for _, v in pairs(Players:GetPlayers()) do
-            if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = v.Character.HumanoidRootPart
-                local box = hrp:FindFirstChild("SLX_Box")
+            if v ~= lp and v.Character then
+                local hl = v.Character:FindFirstChild("Z_Highlight")
                 
-                if not box then
-                    CrearCaja360(v)
+                if not hl then
+                    CrearESP360(v)
                 else
-                    box.Visible = true
+                    hl.Enabled = true
+                    -- Actualizar color por si cambian de equipo
                     if _G.Z_ESP_TeamColor and v.Team then
-                        box.Color3 = v.TeamColor.Color
+                        hl.FillColor = v.TeamColor.Color
+                        hl.OutlineColor = v.TeamColor.Color
                     end
                 end
             end
