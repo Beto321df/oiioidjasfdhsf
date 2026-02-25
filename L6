@@ -681,78 +681,84 @@ game:GetService("RunService").Heartbeat:Connect(function()
     _G.Z_Force_Reset = false 
 end)
 
--- [[ MOTOR ESP 360 RAYOS X - Z-HUB FIX ]]
+-- [[ MOTOR ESP 2D GHOST - Z-HUB ]]
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local cam = workspace.CurrentCamera
 local lp = Players.LocalPlayer
 
-local function LimpiarESP()
-    for _, v in pairs(Players:GetPlayers()) do
-        if v.Character then
-            -- Limpiamos el Highlight (Rayos X)
-            if v.Character:FindFirstChild("Z_Highlight") then v.Character.Z_Highlight:Destroy() end
-            -- Limpiamos rastros antiguos
-            if v.Character:FindFirstChild("SLX_Shadow") then v.Character.SLX_Shadow:Destroy() end
-            if v.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = v.Character.HumanoidRootPart
-                if hrp:FindFirstChild("SLX_Box") then hrp.SLX_Box:Destroy() end
-            end
-        end
+local ESP_Table = {}
+
+-- Función para crear los dibujos
+local function CreateESP(p)
+    local box = Drawing.new("Square")
+    box.Visible = false
+    box.Color = Color3.new(1, 1, 1)
+    box.Thickness = 1.5
+    box.Transparency = 1
+    box.Filled = false
+
+    ESP_Table[p] = box
+end
+
+-- Limpieza
+local function RemoveESP(p)
+    if ESP_Table[p] then
+        ESP_Table[p]:Remove()
+        ESP_Table[p] = nil
     end
 end
 
-local function CrearESP360(p)
-    if p == lp then return end
-    
-    local function apply()
-        local char = p.Character or p.CharacterAdded:Wait()
-        if not _G.Z_ESP_Active then return end 
-        
-        -- Si ya tiene el ESP, no creamos otro
-        if char:FindFirstChild("Z_Highlight") then return end
-
-        -- [[ EL FIX: USAMOS HIGHLIGHT PARA VER TRAS PAREDES ]]
-        local hl = Instance.new("Highlight")
-        hl.Name = "Z_Highlight"
-        hl.Adornee = char
-        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- <--- ESTO ES EL WALLHACK
-        hl.FillTransparency = 0.5 -- Relleno suave
-        hl.OutlineTransparency = 0 -- Borde marcado
-        
-        -- Color inicial
-        if _G.Z_ESP_TeamColor and p.Team then
-            hl.FillColor = p.TeamColor.Color
-            hl.OutlineColor = p.TeamColor.Color
-        else
-            hl.FillColor = Color3.fromRGB(255, 255, 255)
-            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-        end
-        
-        hl.Parent = char
-    end
-    
-    p.CharacterAdded:Connect(apply)
-    if p.Character then apply() end
-end
-
-game:GetService("RunService").Heartbeat:Connect(function()
+-- Bucle Principal (RenderStepped para que sea instantáneo)
+RunService.RenderStepped:Connect(function()
     if _G.Z_ESP_Active then
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= lp and v.Character then
-                local hl = v.Character:FindFirstChild("Z_Highlight")
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local box = ESP_Table[p] or CreateESP(p) or ESP_Table[p]
+                local hrp = p.Character.HumanoidRootPart
                 
-                if not hl then
-                    CrearESP360(v)
-                else
-                    hl.Enabled = true
-                    -- Actualizar color por si cambian de equipo
-                    if _G.Z_ESP_TeamColor and v.Team then
-                        hl.FillColor = v.TeamColor.Color
-                        hl.OutlineColor = v.TeamColor.Color
+                -- [[ EL TRUCO PARA QUE NO SE PIERDA TRAS PAREDES ]]
+                -- WorldToViewportPoint nos da la posición en pantalla sin importar si hay paredes
+                local screenPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
+
+                if onScreen then
+                    -- Cálculo de tamaño estable (No vibra porque usamos math.floor)
+                    local dist = (cam.CFrame.Position - hrp.Position).Magnitude
+                    local sizeX = math.floor(2500 / dist)
+                    local sizeY = math.floor(4000 / dist)
+                    
+                    box.Size = Vector2.new(sizeX, sizeY)
+                    -- Redondeamos la posición para evitar que baile
+                    box.Position = Vector2.new(math.floor(screenPos.X - sizeX / 2), math.floor(screenPos.Y - sizeY / 2))
+                    
+                    -- Color por equipo
+                    if _G.Z_ESP_TeamColor and p.Team then
+                        box.Color = p.TeamColor.Color
+                    else
+                        box.Color = Color3.fromRGB(255, 255, 255)
                     end
+                    
+                    box.Visible = true
+                else
+                    box.Visible = false
                 end
+            elseif ESP_Table[p] then
+                ESP_Table[p].Visible = false
             end
         end
     else
-        LimpiarESP() 
+        -- Si se apaga, ocultamos todo
+        for _, box in pairs(ESP_Table) do
+            box.Visible = false
+        end
     end
 end)
+
+-- Conexiones
+Players.PlayerAdded:Connect(CreateESP)
+Players.PlayerRemoving:Connect(RemoveESP)
+
+-- Cargar a los que ya están
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= lp then CreateESP(p) end
+end
