@@ -1,30 +1,3 @@
--- Pc
---// Z SLX HUB - GAME LOCK CON NOTIFICACIÓN //--
-local ID_Rancheria = 17209126270
-
--- Función para la notificación perrona
-local function NotificarZ(titulo, texto, duracion)
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = titulo;
-        Text = texto;
-        Duration = duracion;
-        Icon = "rbxassetid://1108967368" -- Aquí puedes poner el ID de un icono si quieres we
-    })
-end
-
-if game.PlaceId ~= ID_Rancheria then
-    -- Notificación de error y cierre
-    NotificarZ("Z SLX HUB ERROR", "No support game / Juego no compatible ", 5)
-    task.wait(0.5) -- Un respiro para que alcance a salir
-    return 
-else
-    -- Notificación de éxito
-    NotificarZ("Z SLX Pc", "Bienvenido, cargando Rancheria Nuevo Leon...", 5)
-end
-
---// AQUÍ PEGAS TODO TU SCRIPT (MENÚ, HITBOX, TP, ETC.) //--
-print("Z SLX Hub: Ejecutado correctamente")
-
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
